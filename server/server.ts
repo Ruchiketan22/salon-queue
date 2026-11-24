@@ -73,29 +73,34 @@ app.post('/api/queue/join', (req, res) => {
   res.status(201).json(result);
 });
 
-// GET /api/queue/:id - Entry details
+// GET /api/queue/:id - Enriched Entry details
 app.get('/api/queue/:id', (req, res) => {
-  const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(req.params.id) as any;
-  if (!entry) {
+  const details = queueRules.getEntryDetails(req.params.id);
+  if (!details) {
     return res.status(404).json({ error: 'Entry not found' });
   }
+  res.json(details);
+});
 
-  const waitInfo = queueRules.calculateWaitTime(entry.id);
-  const serviceIds = JSON.parse(entry.service_ids || '[]');
-  
-  res.json({
-    id: entry.id,
-    token: entry.token,
-    customerName: entry.customer_name,
-    phone: entry.phone,
-    serviceIds,
-    preferredBarberId: entry.preferred_barber_id,
-    assignedBarberId: entry.assigned_barber_id,
-    status: entry.status,
-    createdAt: entry.created_at,
-    estimatedWaitMinutes: waitInfo.estimatedMinutes,
-    position: waitInfo.position,
-  });
+// POST /api/queue/:id/cancel - Cancel spot while Waiting
+app.post('/api/queue/:id/cancel', (req, res) => {
+  const result = queueRules.cancelEntry(req.params.id);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  io.emit('queue:updated');
+  res.json({ success: true, message: 'Spot cancelled successfully' });
+});
+
+// PATCH /api/queue/:id/status - Update queue status
+app.patch('/api/queue/:id/status', (req, res) => {
+  const { status, assignedBarberId } = req.body;
+  const result = queueRules.updateStatus(req.params.id, status, assignedBarberId);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  io.emit('queue:updated');
+  res.json(result);
 });
 
 // Socket.IO event handler

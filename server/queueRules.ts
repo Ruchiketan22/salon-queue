@@ -281,5 +281,120 @@ export const queueRules = {
         position: waitInfo.position,
       },
     };
+  },
+
+  /**
+   * Cancel an entry only while Waiting
+   */
+  cancelEntry(entryId: string): { success: boolean; message?: string } {
+    const entry = db.prepare('SELECT status FROM queue_entries WHERE id = ?').get(entryId) as { status: string } | undefined;
+    if (!entry) {
+      return { success: false, message: 'Entry not found' };
+    }
+    if (entry.status !== 'Waiting') {
+      return { success: false, message: 'Can only cancel while waiting' };
+    }
+    db.prepare("UPDATE queue_entries SET status = 'Cancelled' WHERE id = ?").run(entryId);
+    return { success: true };
+  },
+
+  /**
+   * Update status enforcing strict lifecycle rules
+   */
+  updateStatus(entryId: string, newStatus: string, assignedBarberId?: string): { success: boolean; message?: string; entry?: any } {
+    const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(entryId) as any;
+    if (!entry) {
+      return { success: false, message: 'Entry not found' };
+    }
+
+    if (!this.isValidStatusTransition(entry.status, newStatus)) {
+      return { success: false, message: `Invalid status transition from ${entry.status} to ${newStatus}` };
+    }
+
+    const now = new Date().toISOString();
+    let calledAt = entry.called_at;
+    let startedAt = entry.started_at;
+    let completedAt = entry.completed_at;
+    let finalBarberId = entry.assigned_barber_id;
+
+    if (newStatus === 'Called') {
+      calledAt = now;
+      if (assignedBarberId) finalBarberId = assignedBarberId;
+    } else if (newStatus === 'In chair') {
+      startedAt = now;
+      if (assignedBarberId) finalBarberId = assignedBarberId;
+    } else if (newStatus === 'Done') {
+      completedAt = now;
+    }
+
+    db.prepare(`
+      UPDATE queue_entries
+      SET status = ?, called_at = ?, started_at = ?, completed_at = ?, assigned_barber_id = ?
+      WHERE id = ?
+    `).run(newStatus, calledAt, startedAt, completedAt, finalBarberId, entryId);
+
+    return {
+      success: true,
+      entry: this.getEntryDetails(entryId)
+    };
+  },
+
+  /**
+   * Get enriched entry details
+   */
+  getEntryDetails(entryId: string): any | null {
+    const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(entryId) as any;
+    if (!entry) return null;
+
+    const waitInfo = this.calculateWaitTime(entry.id);
+    const serviceIds: string[] = JSON.parse(entry.service_ids || '[]');
+
+    let services: any[] = [];
+    if (serviceIds.length > 0) {
+      const placeholders = serviceIds.map(() => '?').join(',');
+      services = db.prepare(`
+        SELECT id, name_en as nameEn, name_gu as nameGu, duration_minutes as durationMinutes, price
+        FROM services WHERE id IN (${placeholders})
+      `).all(...serviceIds);
+    }
+
+    let preferredBarber = null;
+    if (entry.preferred_barber_id) {
+      preferredBarber = db.prepare(`
+        SELECT id, name, status, is_on_duty as isOnDuty
+        FROM barbers WHERE id = ?
+      `).get(entry.preferred_barber_id) || null;
+    }
+
+    let assignedBarber = null;
+    if (entry.assigned_barber_id) {
+      assignedBarber = db.prepare(`
+        SELECT id, name, status, is_on_duty as isOnDuty
+        FROM barbers WHERE id = ?
+      `).get(entry.assigned_barber_id) || null;
+    }
+
+    const totalDurationMinutes = services.reduce((sum, s) => sum + (s.durationMinutes || 0), 0);
+    const totalPrice = services.reduce((sum, s) => sum + (s.price || 0), 0);
+
+    return {
+      id: entry.id,
+      token: entry.token,
+      customerName: entry.customer_name,
+      phone: entry.phone,
+      serviceIds,
+      services,
+      preferredBarber,
+      assignedBarber,
+      status: entry.status,
+      createdAt: entry.created_at,
+      calledAt: entry.called_at,
+      startedAt: entry.started_at,
+      completedAt: entry.completed_at,
+      estimatedWaitMinutes: waitInfo.estimatedMinutes,
+      position: waitInfo.position,
+      totalDurationMinutes,
+      totalPrice,
+    };
   }
 };

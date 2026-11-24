@@ -18,6 +18,7 @@ If code and docs disagree, the docs win. Ask me before changing a doc.
 - The first line after the title in README.md must be the live link
 
 ## How to work
+- Always use the system Node 22 that `node -v` shows. Never switch Node versions (no fnm or nvm). Never run npm install or npm rebuild unless I ask, because it breaks better-sqlite3 for my Node 22.
 - One screen or one feature per task. Don't touch other screens.
 - Plan first for big steps: show the plan and files you will create, then wait for my OK.
 - Theme: charcoal (#1F2937) + gold (#D4A017), rounded cards, mobile-first (390px wide), then tablet and TV.
