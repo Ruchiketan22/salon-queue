@@ -20,6 +20,30 @@ export interface JoinRequest {
   preferredBarberId?: string | null;
 }
 
+
+/**
+ * Online joining hours (docs/03-flows-rules.md): salon open 10:00-21:00,
+ * online joining closes 30 minutes before closing (20:30).
+ * Uses Indian time so it also works on a UTC server such as Render.
+ * Off by default so the live demo can always be tested; set ENFORCE_ONLINE_HOURS=true to turn it on.
+ */
+const ONLINE_OPEN_MINUTE = 10 * 60;        // 10:00
+const ONLINE_CLOSE_MINUTE = 20 * 60 + 30;  // 20:30
+
+function isWithinOnlineHours(): boolean {
+  if (process.env.ENFORCE_ONLINE_HOURS !== 'true') return true;
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date());
+  const hour = parseInt(parts.find((x) => x.type === 'hour')?.value || '0', 10) % 24;
+  const minute = parseInt(parts.find((x) => x.type === 'minute')?.value || '0', 10);
+  const minutes = hour * 60 + minute;
+  return minutes >= ONLINE_OPEN_MINUTE && minutes < ONLINE_CLOSE_MINUTE;
+}
+
 /**
  * Centralized Queue Rules Module
  * - All queue ordering, wait times, token generation, and state transitions live here.
@@ -122,7 +146,8 @@ export const queueRules = {
     }
 
     const onlineSetting = db.prepare(`SELECT value FROM settings WHERE key = 'online_queue_open'`).get() as { value: string } | undefined;
-    const isOnlineQueueOpen = onlineSetting ? onlineSetting.value === 'true' : true;
+    const ownerOpen = onlineSetting ? onlineSetting.value === 'true' : true;
+    const isOnlineQueueOpen = ownerOpen && isWithinOnlineHours();
 
     return {
       waitingCount,
