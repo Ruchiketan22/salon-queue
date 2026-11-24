@@ -1,0 +1,89 @@
+{
+  "app": {
+    "title": "Salon Queue",
+    "tagline": "Real-time queue tracking",
+    "openStatus": "Open · Closes 9 PM",
+    "closedStatus": "Closed",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "backHome": "Back to Home",
+    "backToSpot": "Back to My Spot"
+  },
+  "nav": {
+    "home": "Home",
+    "join": "Join Queue",
+    "reception": "Reception",
+    "barber": "Barber",
+    "display": "TV Display",
+    "admin": "Admin"
+  },
+  "home": {
+    "title": "Welcome to Salon",
+    "subtitle": "Check the live queue and save your spot from anywhere",
+    "joinQueue": "Join Queue",
+    "queueClosed": "Online queue is closed. Walk-ins are welcome at the salon.",
+    "emptyQueue": "No one waiting, walk right in!"
+  },
+  "join": {
+    "title": "Join the Queue",
+    "subtitle": "Choose your services and preferred barber",
+    "name": "Full Name",
+    "namePlaceholder": "Enter your name",
+    "phone": "Phone Number",
+    "phonePlaceholder": "10-digit mobile number",
+    "phoneError": "Please enter a valid 10-digit phone number",
+    "services": "Select Services (Max 3)",
+    "servicesLimit": "You can choose up to 3 services",
+    "barber": "Select Barber",
+    "anyBarber": "Any barber (fastest)",
+    "confirm": "Confirm & Join",
+    "alreadyInQueue": "You are already in the queue"
+  },
+  "status": {
+    "title": "My Spot",
+    "position": "in line",
+    "estimatedWait": "Estimated Wait",
+    "startComing": "Start coming to the salon",
+    "yourTurn": "It's your turn!",
+    "inChair": "Enjoy your service",
+    "done": "Thank you for visiting!",
+    "noShow": "You were marked absent. Please rejoin the queue.",
+    "cancelSpot": "Cancel my spot",
+    "rejoin": "Join again"
+  },
+  "reception": {
+    "title": "Reception Dashboard",
+    "addWalkIn": "+ Add walk-in",
+    "callNext": "Call next",
+    "noShow": "No-show",
+    "cancel": "Cancel",
+    "noOneWaiting": "No one waiting"
+  },
+  "barber": {
+    "title": "Barber View",
+    "onBreak": "On break",
+    "available": "Available",
+    "start": "Start",
+    "done": "Done",
+    "noCustomer": "No customer yet. Reception will call the next one."
+  },
+  "display": {
+    "title": "Waiting Area Display",
+    "now": "Now",
+    "upNext": "Up Next",
+    "free": "Free",
+    "onBreak": "On break"
+  },
+  "admin": {
+    "title": "Owner Settings",
+    "services": "Services",
+    "barbers": "Barbers on Duty",
+    "onlineQueue": "Online Queue",
+    "todayStats": "Today's Stats"
+  },
+  "pin": {
+    "enterPin": "Enter PIN",
+    "submit": "Unlock",
+    "invalidPin": "Incorrect PIN. Please try again."
+  }
+}
