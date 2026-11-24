@@ -3,6 +3,7 @@ import { Header } from '../components/Header';
 import { BarberAvatar } from '../components/BarberAvatar';
 import { useLanguage } from '../context/LanguageContext';
 import { socket } from '../socket';
+import { apiUrl } from '../apiBase';
 
 interface ServiceDetail {
   id: string;
@@ -57,7 +58,7 @@ export const StatusScreen: React.FC<StatusScreenProps> = ({ id }) => {
     if (!id) return;
     try {
       setError(null);
-      const res = await fetch(`/api/queue/${id}`);
+      const res = await fetch(apiUrl(`/api/queue/${id}`));
       if (!res.ok) {
         if (res.status === 404) {
           throw new Error(t('status.spotNotFound'));
@@ -106,7 +107,7 @@ export const StatusScreen: React.FC<StatusScreenProps> = ({ id }) => {
     if (!id || cancelling) return;
     try {
       setCancelling(true);
-      const res = await fetch(`/api/queue/${id}/cancel`, {
+      const res = await fetch(apiUrl(`/api/queue/${id}/cancel`), {
         method: 'POST',
       });
       if (!res.ok) {

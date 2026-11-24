@@ -3,6 +3,7 @@ import { PinGate } from '../components/PinGate';
 import { BarberAvatar } from '../components/BarberAvatar';
 import { useLanguage } from '../context/LanguageContext';
 import { socket } from '../socket';
+import { apiUrl } from '../apiBase';
 
 interface ServiceDetail {
   id: string;
@@ -62,7 +63,7 @@ export const BarberScreen: React.FC<BarberScreenProps> = ({ name }) => {
     if (!barberSlug) return;
     try {
       setError(null);
-      const res = await fetch(`/api/barber/${encodeURIComponent(barberSlug)}`);
+      const res = await fetch(apiUrl(`/api/barber/${encodeURIComponent(barberSlug)}`));
       if (!res.ok) {
         if (res.status === 404) {
           throw new Error(t('barber.barberNotFound'));
@@ -105,7 +106,7 @@ export const BarberScreen: React.FC<BarberScreenProps> = ({ name }) => {
     if (!data?.barber.id || actionLoading) return;
     try {
       setActionLoading(true);
-      const res = await fetch('/api/barber/toggle-break', {
+      const res = await fetch(apiUrl('/api/barber/toggle-break'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ barberId: data.barber.id }),
@@ -124,7 +125,7 @@ export const BarberScreen: React.FC<BarberScreenProps> = ({ name }) => {
     if (!data?.barber.id || actionLoading) return;
     try {
       setActionLoading(true);
-      const res = await fetch('/api/barber/start', {
+      const res = await fetch(apiUrl('/api/barber/start'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ entryId, barberId: data.barber.id }),
@@ -146,7 +147,7 @@ export const BarberScreen: React.FC<BarberScreenProps> = ({ name }) => {
     if (!data?.barber.id || actionLoading) return;
     try {
       setActionLoading(true);
-      const res = await fetch('/api/barber/done', {
+      const res = await fetch(apiUrl('/api/barber/done'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ entryId, barberId: data.barber.id }),

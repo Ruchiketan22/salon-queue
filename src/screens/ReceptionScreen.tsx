@@ -4,6 +4,7 @@ import { BarberAvatar } from '../components/BarberAvatar';
 import { useLanguage } from '../context/LanguageContext';
 import { socket } from '../socket';
 import { ServiceItem } from '../types';
+import { apiUrl } from '../apiBase';
 
 interface ServiceDetail {
   id: string;
@@ -85,7 +86,7 @@ export const ReceptionScreen: React.FC = () => {
 
   const fetchDashboard = useCallback(async () => {
     try {
-      const res = await fetch('/api/reception/dashboard');
+      const res = await fetch(apiUrl('/api/reception/dashboard'));
       if (!res.ok) throw new Error('Failed to load reception dashboard');
       const data: DashboardData = await res.json();
       setDashboard(data);
@@ -99,7 +100,7 @@ export const ReceptionScreen: React.FC = () => {
 
   const fetchServices = useCallback(async () => {
     try {
-      const res = await fetch('/api/services');
+      const res = await fetch(apiUrl('/api/services'));
       if (res.ok) {
         const data: ServiceItem[] = await res.json();
         setServices(data);
@@ -139,7 +140,7 @@ export const ReceptionScreen: React.FC = () => {
   // Call Next Handler
   const handleCallNext = async (barberId: string, barberName: string) => {
     try {
-      const res = await fetch('/api/reception/call-next', {
+      const res = await fetch(apiUrl('/api/reception/call-next'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ barberId }),
@@ -166,7 +167,7 @@ export const ReceptionScreen: React.FC = () => {
     if (!window.confirm(`${t('reception.noShowConfirmTitle')} (${token})`)) return;
 
     try {
-      const res = await fetch('/api/reception/no-show', {
+      const res = await fetch(apiUrl('/api/reception/no-show'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ entryId }),
@@ -189,7 +190,7 @@ export const ReceptionScreen: React.FC = () => {
     if (!window.confirm(`${t('reception.cancelConfirmTitle')} (${token})`)) return;
 
     try {
-      const res = await fetch(`/api/queue/${entryId}/cancel`, {
+      const res = await fetch(apiUrl(`/api/queue/${entryId}/cancel`), {
         method: 'POST',
       });
 
@@ -218,7 +219,7 @@ export const ReceptionScreen: React.FC = () => {
       setWalkInSubmitting(true);
       setWalkInError(null);
 
-      const res = await fetch('/api/reception/walk-in', {
+      const res = await fetch(apiUrl('/api/reception/walk-in'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -4,6 +4,7 @@ import { PinGate } from '../components/PinGate';
 import { BarberAvatar } from '../components/BarberAvatar';
 import { useLanguage } from '../context/LanguageContext';
 import { socket } from '../socket';
+import { apiUrl } from '../apiBase';
 
 interface AdminService {
   id: string;
@@ -68,7 +69,7 @@ const AdminContent: React.FC = () => {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/dashboard');
+      const res = await fetch(apiUrl('/api/admin/dashboard'));
       if (!res.ok) throw new Error('Failed to load settings');
       setData(await res.json());
       setLoadError(null);

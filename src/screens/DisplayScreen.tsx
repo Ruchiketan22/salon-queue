@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BarberAvatar } from '../components/BarberAvatar';
 import { useLanguage } from '../context/LanguageContext';
 import { socket } from '../socket';
+import { apiUrl } from '../apiBase';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -150,7 +151,7 @@ export const DisplayScreen: React.FC = () => {
 
   const fetchDisplay = useCallback(async () => {
     try {
-      const res = await fetch('/api/display');
+      const res = await fetch(apiUrl('/api/display'));
       if (!res.ok) throw new Error('Failed to load display data');
       const incoming: DisplayData = await res.json();
 

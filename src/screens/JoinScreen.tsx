@@ -4,6 +4,7 @@ import { BarberAvatar } from '../components/BarberAvatar';
 import { useLanguage } from '../context/LanguageContext';
 import { ServiceItem, Barber } from '../types';
 import { socket } from '../socket';
+import { apiUrl } from '../apiBase';
 
 interface QueueOverviewData {
   waitingCount: number;
@@ -43,9 +44,9 @@ export const JoinScreen: React.FC = () => {
     try {
       setFetchError(null);
       const [srvRes, barbRes, ovRes] = await Promise.all([
-        fetch('/api/services'),
-        fetch('/api/barbers'),
-        fetch('/api/queue/overview'),
+        fetch(apiUrl('/api/services')),
+        fetch(apiUrl('/api/barbers')),
+        fetch(apiUrl('/api/queue/overview')),
       ]);
 
       if (!srvRes.ok || !barbRes.ok || !ovRes.ok) {
@@ -81,9 +82,9 @@ export const JoinScreen: React.FC = () => {
     const refreshLive = async () => {
       try {
         const [srvRes, barbRes, ovRes] = await Promise.all([
-          fetch('/api/services'),
-          fetch('/api/barbers'),
-          fetch('/api/queue/overview'),
+          fetch(apiUrl('/api/services')),
+          fetch(apiUrl('/api/barbers')),
+          fetch(apiUrl('/api/queue/overview')),
         ]);
         if (!srvRes.ok || !barbRes.ok || !ovRes.ok) return;
         const srvData: ServiceItem[] = await srvRes.json();
@@ -145,7 +146,7 @@ export const JoinScreen: React.FC = () => {
       setSubmitError(null);
       setAlreadyInQueueEntryId(null);
 
-      const res = await fetch('/api/queue/join', {
+      const res = await fetch(apiUrl('/api/queue/join'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

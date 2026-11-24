@@ -4,6 +4,7 @@ import { BarberAvatar } from '../components/BarberAvatar';
 import { useLanguage } from '../context/LanguageContext';
 import { socket } from '../socket';
 import { Barber } from '../types';
+import { apiUrl } from '../apiBase';
 
 interface QueueOverviewData {
   waitingCount: number;
@@ -25,8 +26,8 @@ export const HomeScreen: React.FC = () => {
     try {
       setError(null);
       const [overviewRes, barbersRes] = await Promise.all([
-        fetch('/api/queue/overview'),
-        fetch('/api/barbers'),
+        fetch(apiUrl('/api/queue/overview')),
+        fetch(apiUrl('/api/barbers')),
       ]);
 
       if (!overviewRes.ok || !barbersRes.ok) {
@@ -50,7 +51,7 @@ export const HomeScreen: React.FC = () => {
   useEffect(() => {
     const savedSpotId = localStorage.getItem('salon_active_token_id');
     if (savedSpotId) {
-      fetch(`/api/queue/${savedSpotId}`)
+      fetch(apiUrl(`/api/queue/${savedSpotId}`))
         .then((res) => {
           if (res.ok) return res.json();
           throw new Error('Spot not found');
