@@ -396,5 +396,289 @@ export const queueRules = {
       totalDurationMinutes,
       totalPrice,
     };
+  },
+
+  /**
+   * Call Next Customer for Barber X
+   * - Picks the earliest Waiting customer who chose X or 'Any barber'
+   * - Never gives a customer who chose another barber to X
+   * - Barber must be Available and have no active Called or In chair customer
+   */
+  callNext(barberId: string): { success: boolean; code?: string; message?: string; entry?: any } {
+    const barber = db.prepare('SELECT * FROM barbers WHERE id = ?').get(barberId) as any;
+    if (!barber || barber.is_on_duty !== 1) {
+      return { success: false, code: 'NOT_ON_DUTY', message: 'Barber is not on duty' };
+    }
+
+    if (barber.status === 'On break') {
+      return { success: false, code: 'ON_BREAK', message: `${barber.name} is on break` };
+    }
+
+    const activeCust = db.prepare(`
+      SELECT id FROM queue_entries 
+      WHERE assigned_barber_id = ? AND status IN ('Called', 'In chair')
+      LIMIT 1
+    `).get(barberId) as { id: string } | undefined;
+
+    if (activeCust) {
+      return { success: false, code: 'BARBER_BUSY', message: `${barber.name} already has an active customer` };
+    }
+
+    // Earliest Waiting customer who chose this barber OR 'Any barber' (preferred_barber_id IS NULL)
+    const candidate = db.prepare(`
+      SELECT id FROM queue_entries
+      WHERE status = 'Waiting'
+        AND (preferred_barber_id IS NULL OR preferred_barber_id = ?)
+      ORDER BY created_at ASC
+      LIMIT 1
+    `).get(barberId) as { id: string } | undefined;
+
+    if (!candidate) {
+      return {
+        success: false,
+        code: 'NO_MATCHING_CUSTOMER',
+        message: 'No matching customer for this barber',
+      };
+    }
+
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE queue_entries
+      SET status = 'Called', assigned_barber_id = ?, called_at = ?
+      WHERE id = ?
+    `).run(barberId, now, candidate.id);
+
+    return {
+      success: true,
+      entry: this.getEntryDetails(candidate.id),
+    };
+  },
+
+  /**
+   * Add Walk-in customer from Reception
+   * - Can still be added after online joining closes
+   */
+  addWalkIn(data: JoinRequest): { success: boolean; code?: string; message?: string; entry?: any } {
+    const trimmedName = (data.customerName || '').trim();
+    if (!trimmedName) {
+      return { success: false, code: 'INVALID_NAME', message: 'Name is required' };
+    }
+
+    const cleanedPhone = (data.phone || '').trim().replace(/\D/g, '');
+    if (!/^\d{10}$/.test(cleanedPhone)) {
+      return { success: false, code: 'INVALID_PHONE', message: 'Phone must be exactly 10 digits' };
+    }
+
+    if (!Array.isArray(data.serviceIds) || data.serviceIds.length < 1 || data.serviceIds.length > 3) {
+      return { success: false, code: 'INVALID_SERVICES', message: 'Must select between 1 and 3 services' };
+    }
+
+    const placeholders = data.serviceIds.map(() => '?').join(',');
+    const validServices = db.prepare(`
+      SELECT id FROM services WHERE id IN (${placeholders}) AND is_active = 1
+    `).all(...data.serviceIds) as { id: string }[];
+
+    if (validServices.length !== data.serviceIds.length) {
+      return { success: false, code: 'SERVICE_UNAVAILABLE', message: 'One or more selected services are inactive' };
+    }
+
+    let preferredBarberId: string | null = null;
+    if (data.preferredBarberId) {
+      const barber = db.prepare('SELECT id FROM barbers WHERE id = ? AND is_on_duty = 1').get(data.preferredBarberId) as { id: string } | undefined;
+      if (barber) {
+        preferredBarberId = barber.id;
+      }
+    }
+
+    const activeCheck = this.hasActiveSpot(cleanedPhone);
+    if (activeCheck.active) {
+      return {
+        success: false,
+        code: 'ALREADY_IN_QUEUE',
+        message: 'Customer already has an active spot in the queue',
+        entry: this.getEntryDetails(activeCheck.entryId!),
+      };
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const token = this.getNextToken(todayStr);
+    const id = `entry-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    const createdAt = new Date().toISOString();
+    const overview = this.getQueueOverview();
+
+    db.prepare(`
+      INSERT INTO queue_entries (
+        id, token, customer_name, phone, service_ids, preferred_barber_id,
+        status, date, created_at, estimated_wait_minutes
+      ) VALUES (?, ?, ?, ?, ?, ?, 'Waiting', ?, ?, ?)
+    `).run(
+      id,
+      token,
+      trimmedName,
+      cleanedPhone,
+      JSON.stringify(data.serviceIds),
+      preferredBarberId,
+      todayStr,
+      createdAt,
+      overview.nextEstimatedWaitMinutes
+    );
+
+    return {
+      success: true,
+      entry: this.getEntryDetails(id),
+    };
+  },
+
+  /**
+   * Mark customer as No-show
+   * - Only allowed for Called customers
+   */
+  markNoShow(entryId: string): { success: boolean; message?: string } {
+    const entry = db.prepare('SELECT status FROM queue_entries WHERE id = ?').get(entryId) as any;
+    if (!entry) {
+      return { success: false, message: 'Entry not found' };
+    }
+
+    if (entry.status !== 'Called') {
+      return { success: false, message: 'Only Called customers can be marked as No-show' };
+    }
+
+    db.prepare("UPDATE queue_entries SET status = 'No-show' WHERE id = ?").run(entryId);
+    return { success: true };
+  },
+
+  /**
+   * Full Reception Dashboard Data Aggregator
+   */
+  getReceptionDashboard(): any {
+    const now = Date.now();
+    const barbers = db.prepare(`
+      SELECT id, name, status, is_on_duty as isOnDuty
+      FROM barbers
+      WHERE is_on_duty = 1
+      ORDER BY id ASC
+    `).all() as any[];
+
+    const enrichedBarbers = barbers.map((b) => {
+      const activeEntry = db.prepare(`
+        SELECT * FROM queue_entries
+        WHERE assigned_barber_id = ? AND status IN ('Called', 'In chair')
+        ORDER BY created_at DESC
+        LIMIT 1
+      `).get(b.id) as any;
+
+      let currentCustomer = null;
+      if (activeEntry) {
+        const srvIds: string[] = JSON.parse(activeEntry.service_ids || '[]');
+        const placeholders = srvIds.map(() => '?').join(',');
+        const services = srvIds.length > 0 ? db.prepare(`
+          SELECT id, name_en as nameEn, name_gu as nameGu, duration_minutes as durationMinutes, price
+          FROM services WHERE id IN (${placeholders})
+        `).all(...srvIds) : [];
+
+        const totalMinutes = services.reduce((sum: number, s: any) => sum + (s.durationMinutes || 0), 0);
+
+        let elapsedMinutes = 0;
+        let remainingMinutes = totalMinutes;
+
+        if (activeEntry.status === 'In chair' && activeEntry.started_at) {
+          elapsedMinutes = Math.floor((now - new Date(activeEntry.started_at).getTime()) / 60000);
+          remainingMinutes = Math.max(0, totalMinutes - elapsedMinutes);
+        }
+
+        currentCustomer = {
+          id: activeEntry.id,
+          token: activeEntry.token,
+          customerName: activeEntry.customer_name,
+          phone: activeEntry.phone,
+          status: activeEntry.status,
+          services,
+          totalMinutes,
+          elapsedMinutes,
+          remainingMinutes,
+          calledAt: activeEntry.called_at,
+          startedAt: activeEntry.started_at,
+        };
+      }
+
+      const isBusy = b.status === 'Busy' || currentCustomer !== null;
+      const canCallNext = b.status === 'Available' && currentCustomer === null;
+
+      return {
+        id: b.id,
+        name: b.name,
+        status: b.status,
+        isOnDuty: !!b.isOnDuty,
+        currentCustomer,
+        isBusy,
+        canCallNext,
+      };
+    });
+
+    const entries = db.prepare(`
+      SELECT * FROM queue_entries
+      WHERE status IN ('Waiting', 'Called')
+      ORDER BY (CASE WHEN status = 'Called' THEN 0 ELSE 1 END), created_at ASC
+    `).all() as any[];
+
+    const enrichedQueueList = entries.map((entry) => {
+      const srvIds: string[] = JSON.parse(entry.service_ids || '[]');
+      const placeholders = srvIds.map(() => '?').join(',');
+      const services = srvIds.length > 0 ? db.prepare(`
+        SELECT id, name_en as nameEn, name_gu as nameGu, duration_minutes as durationMinutes, price
+        FROM services WHERE id IN (${placeholders})
+      `).all(...srvIds) : [];
+
+      let preferredBarber = null;
+      if (entry.preferred_barber_id) {
+        preferredBarber = db.prepare('SELECT id, name FROM barbers WHERE id = ?').get(entry.preferred_barber_id) || null;
+      }
+
+      let assignedBarber = null;
+      if (entry.assigned_barber_id) {
+        assignedBarber = db.prepare('SELECT id, name FROM barbers WHERE id = ?').get(entry.assigned_barber_id) || null;
+      }
+
+      const createdTime = new Date(entry.created_at).getTime();
+      const waitedMinutes = Math.floor((now - createdTime) / 60000);
+      const isOver60 = waitedMinutes >= 60;
+
+      let calledSecondsRemaining = 0;
+      let isCountdownZero = false;
+
+      if (entry.status === 'Called' && entry.called_at) {
+        const calledTime = new Date(entry.called_at).getTime();
+        const elapsedSec = Math.floor((now - calledTime) / 1000);
+        calledSecondsRemaining = Math.max(0, 600 - elapsedSec); // 10 minutes = 600 seconds
+        isCountdownZero = calledSecondsRemaining <= 0;
+      }
+
+      return {
+        id: entry.id,
+        token: entry.token,
+        customerName: entry.customer_name,
+        phone: entry.phone,
+        status: entry.status,
+        services,
+        preferredBarber,
+        assignedBarber,
+        createdAt: entry.created_at,
+        calledAt: entry.called_at,
+        waitedMinutes,
+        isOver60,
+        calledSecondsRemaining,
+        isCountdownZero,
+      };
+    });
+
+    const queueCountRow = db.prepare(`
+      SELECT COUNT(*) as count FROM queue_entries WHERE status IN ('Waiting', 'Called')
+    `).get() as { count: number };
+
+    return {
+      barbers: enrichedBarbers,
+      queueList: enrichedQueueList,
+      queueCount: queueCountRow?.count || 0,
+    };
   }
 };

@@ -92,7 +92,37 @@
     "callNext": "Call next",
     "noShow": "No-show",
     "cancel": "Cancel",
-    "noOneWaiting": "No one waiting"
+    "noOneWaiting": "No one waiting",
+    "queueCount": "In Queue",
+    "barbersHeading": "Barbers & Chairs",
+    "queueHeading": "Live Queue Order",
+    "currentCustomer": "Current",
+    "freeReady": "Free · Ready for next",
+    "onBreakNotice": "On break",
+    "timeLeft": "left",
+    "elapsed": "elapsed",
+    "calledCountdown": "Arriving within",
+    "over60Badge": ">60m wait",
+    "anyBarber": "Any",
+    "waited": "Waited",
+    "min": "m",
+    "noMatchForBarber": "No matching customer for this barber",
+    "lock": "Lock",
+    "modalWalkInTitle": "Add Walk-in Customer",
+    "walkInName": "Customer Name",
+    "walkInNamePlaceholder": "Enter customer name",
+    "walkInPhone": "Phone Number",
+    "walkInPhonePlaceholder": "10-digit mobile number",
+    "walkInPhoneError": "Please enter a valid 10-digit phone number",
+    "walkInServices": "Select Services (Max 3)",
+    "walkInBarber": "Barber Preference",
+    "walkInSubmit": "Add to Queue",
+    "walkInCancel": "Cancel",
+    "walkInLimitWarning": "You can select up to 3 services",
+    "noShowConfirmTitle": "Mark as No-Show?",
+    "noShowConfirmMsg": "Customer will be marked absent and must rejoin if they arrive later.",
+    "cancelConfirmTitle": "Cancel Customer?",
+    "cancelConfirmMsg": "Are you sure you want to cancel this customer from the queue?"
   },
   "barber": {
     "title": "Barber View",
@@ -119,6 +149,9 @@
   "pin": {
     "enterPin": "Enter PIN",
     "submit": "Unlock",
-    "invalidPin": "Incorrect PIN. Please try again."
+    "invalidPin": "Incorrect PIN. Please try again.",
+    "receptionTitle": "Reception Staff Access",
+    "receptionSubtitle": "Enter 4-digit staff PIN (1111) to unlock",
+    "pinPlaceholder": "••••"
   }
 }

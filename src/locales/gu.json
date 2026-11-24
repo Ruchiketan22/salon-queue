@@ -89,10 +89,40 @@
   "reception": {
     "title": "રિસેપ્શન ડેશબોર્ડ",
     "addWalkIn": "+ વૉક-ઇન ઉમેરો",
-    "callNext": "આગળના ગ્રાહકને બોલાવો",
+    "callNext": "આગળનાને બોલાવો",
     "noShow": "ગેરહાજર",
     "cancel": "રદ કરો",
-    "noOneWaiting": "કોઈ રાહ જોતું નથી"
+    "noOneWaiting": "કોઈ રાહ જોતું નથી",
+    "queueCount": "કતારમાં",
+    "barbersHeading": "વાળંદ અને ખુરશી",
+    "queueHeading": "લાઈવ કતાર યાદી",
+    "currentCustomer": "હાલના",
+    "freeReady": "ઉપલબ્ધ · તૈયાર",
+    "onBreakNotice": "વિરામ પર",
+    "timeLeft": "બાકી",
+    "elapsed": "થયો",
+    "calledCountdown": "આવવા માટે બાકી",
+    "over60Badge": ">૬૦મિ રાહ",
+    "anyBarber": "કોઈપણ",
+    "waited": "રાહ જોઈ",
+    "min": "મિ",
+    "noMatchForBarber": "આ વાળંદ માટે કોઈ મેળ ખાતો ગ્રાહક નથી",
+    "lock": "લૉક",
+    "modalWalkInTitle": "વૉક-ઇન ગ્રાહક ઉમેરો",
+    "walkInName": "ગ્રાહકનું નામ",
+    "walkInNamePlaceholder": "ગ્રાહકનું નામ દાખલ કરો",
+    "walkInPhone": "ફોન નંબર",
+    "walkInPhonePlaceholder": "૧૦ અંકનો મોબાઈલ નંબર",
+    "walkInPhoneError": "કૃપા કરીને માન્ય ૧૦ અંકનો ફોન નંબર દાખલ કરો",
+    "walkInServices": "સેવાઓ પસંદ કરો (મહત્તમ ૩)",
+    "walkInBarber": "મનપસંદ વાળંદ",
+    "walkInSubmit": "કતારમાં ઉમેરો",
+    "walkInCancel": "રદ કરો",
+    "walkInLimitWarning": "તમે વધુમાં વધુ ૩ સેવાઓ પસંદ કરી શકો છો",
+    "noShowConfirmTitle": "ગેરહાજર નોંધવું છે?",
+    "noShowConfirmMsg": "ગ્રાહકને કતારમાંથી દૂર કરવામાં આવશે અને જો તેઓ મોડા આવે તો ફરી જોડાવું પડશે.",
+    "cancelConfirmTitle": "ગ્રાહક રદ કરવો છે?",
+    "cancelConfirmMsg": "આ ગ્રાહકને કતારમાંથી રદ કરવો છે?"
   },
   "barber": {
     "title": "વાળંદ સ્ક્રીન",
@@ -119,6 +149,9 @@
   "pin": {
     "enterPin": "પિન દાખલ કરો",
     "submit": "અનલૉક કરો",
-    "invalidPin": "ખોટો પિન. ફરી પ્રયાસ કરો."
+    "invalidPin": "ખોટો પિન. ફરી પ્રયાસ કરો.",
+    "receptionTitle": "રિસેપ્શન સ્ટાફ પ્રવેશ",
+    "receptionSubtitle": "ટેબ્લેટ ડેશબોર્ડ અનલૉક કરવા માટે ૪-અંકનો સ્ટાફ પિન (1111) દાખલ કરો",
+    "pinPlaceholder": "••••"
   }
 }

@@ -25,7 +25,7 @@ Result: WORKED - Implemented My Status with large token, position, circular coun
 ## Step 4 — Reception Dashboard
 **Prompt 4.1**
 Build the Reception Dashboard (Screen 4) for a 10-inch tablet in landscape. Customers who join from a phone must appear automatically. Implement Call next with the barber-preference rules exactly, plus Add walk-in, No-show and Cancel. Then give me 3 scenarios I can try by hand to prove barber preferences are respected.
-Result: ...
+Result: WORKED - Built Reception Dashboard (tablet landscape) with PIN 1111 gate, barber cards with current customer and Call next, queue list with amber >60m highlight, 10-min countdown turning red on overdue, walk-in modal, No-show, Cancel, and Socket.IO auto-sync.
 
 ## Step 5 — Barber View + TV
 **Prompt 5.1**

@@ -103,6 +103,52 @@ app.patch('/api/queue/:id/status', (req, res) => {
   res.json(result);
 });
 
+// GET /api/reception/dashboard - Reception dashboard data
+app.get('/api/reception/dashboard', (_req, res) => {
+  const data = queueRules.getReceptionDashboard();
+  res.json(data);
+});
+
+// POST /api/reception/call-next - Call next customer for barber
+app.post('/api/reception/call-next', (req, res) => {
+  const { barberId } = req.body;
+  if (!barberId) {
+    return res.status(400).json({ success: false, message: 'barberId is required' });
+  }
+  const result = queueRules.callNext(barberId);
+  if (!result.success) {
+    const status = result.code === 'NO_MATCHING_CUSTOMER' ? 404 : 400;
+    return res.status(status).json(result);
+  }
+  io.emit('queue:updated');
+  res.json(result);
+});
+
+// POST /api/reception/walk-in - Add walk-in customer
+app.post('/api/reception/walk-in', (req, res) => {
+  const result = queueRules.addWalkIn(req.body);
+  if (!result.success) {
+    const status = result.code === 'ALREADY_IN_QUEUE' ? 409 : 400;
+    return res.status(status).json(result);
+  }
+  io.emit('queue:updated');
+  res.status(201).json(result);
+});
+
+// POST /api/reception/no-show - Mark Called customer as No-show
+app.post('/api/reception/no-show', (req, res) => {
+  const { entryId } = req.body;
+  if (!entryId) {
+    return res.status(400).json({ success: false, message: 'entryId is required' });
+  }
+  const result = queueRules.markNoShow(entryId);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  io.emit('queue:updated');
+  res.json({ success: true });
+});
+
 // Socket.IO event handler
 io.on('connection', (socket) => {
   socket.on('disconnect', () => {});
