@@ -680,5 +680,203 @@ export const queueRules = {
       queueList: enrichedQueueList,
       queueCount: queueCountRow?.count || 0,
     };
+  },
+
+  /**
+   * Barber View details for /barber/:name
+   */
+  getBarberView(nameOrSlug: string): any {
+    const barber = db.prepare(`
+      SELECT id, name, status, is_on_duty as isOnDuty
+      FROM barbers
+      WHERE LOWER(name) = LOWER(?)
+      LIMIT 1
+    `).get(nameOrSlug.trim()) as any;
+
+    if (!barber) return null;
+
+    // Current Customer (Called or In chair)
+    const activeEntry = db.prepare(`
+      SELECT * FROM queue_entries
+      WHERE assigned_barber_id = ? AND status IN ('Called', 'In chair')
+      ORDER BY created_at DESC
+      LIMIT 1
+    `).get(barber.id) as any;
+
+    let currentCustomer = null;
+    if (activeEntry) {
+      currentCustomer = this.getEntryDetails(activeEntry.id);
+    }
+
+    // "Next for you" Preview: earliest Waiting customer who chose this barber or Any barber
+    const nextEntry = db.prepare(`
+      SELECT id FROM queue_entries
+      WHERE status = 'Waiting'
+        AND (preferred_barber_id IS NULL OR preferred_barber_id = ?)
+      ORDER BY created_at ASC
+      LIMIT 1
+    `).get(barber.id) as { id: string } | undefined;
+
+    let nextCustomer = null;
+    if (nextEntry) {
+      nextCustomer = this.getEntryDetails(nextEntry.id);
+    }
+
+    return {
+      barber,
+      currentCustomer,
+      nextCustomer,
+    };
+  },
+
+  /**
+   * Barber taps [ Start ]
+   * - Transition: Called -> In chair
+   */
+  startService(entryId: string, barberId: string): { success: boolean; message?: string; entry?: any } {
+    const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(entryId) as any;
+    if (!entry) {
+      return { success: false, message: 'Customer entry not found' };
+    }
+
+    if (entry.status !== 'Called') {
+      return { success: false, message: 'Can only start service for a Called customer' };
+    }
+
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE queue_entries
+      SET status = 'In chair', started_at = ?, assigned_barber_id = ?
+      WHERE id = ?
+    `).run(now, barberId, entryId);
+
+    // Update barber status to Busy if they were Available
+    db.prepare(`
+      UPDATE barbers
+      SET status = 'Busy'
+      WHERE id = ? AND status = 'Available'
+    `).run(barberId);
+
+    return {
+      success: true,
+      entry: this.getEntryDetails(entryId),
+    };
+  },
+
+  /**
+   * Barber taps [ Done ]
+   * - Transition: In chair -> Done
+   */
+  completeService(entryId: string, barberId: string): { success: boolean; message?: string } {
+    const entry = db.prepare('SELECT * FROM queue_entries WHERE id = ?').get(entryId) as any;
+    if (!entry) {
+      return { success: false, message: 'Customer entry not found' };
+    }
+
+    if (entry.status !== 'In chair') {
+      return { success: false, message: 'Can only complete service for a customer In chair' };
+    }
+
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE queue_entries
+      SET status = 'Done', completed_at = ?
+      WHERE id = ?
+    `).run(now, entryId);
+
+    // Reset barber status to Available if they were Busy
+    db.prepare(`
+      UPDATE barbers
+      SET status = 'Available'
+      WHERE id = ? AND status = 'Busy'
+    `).run(barberId);
+
+    return { success: true };
+  },
+
+  /**
+   * Toggle Barber Break
+   */
+  toggleBarberBreak(barberId: string): { success: boolean; newStatus?: string; message?: string } {
+    const barber = db.prepare('SELECT * FROM barbers WHERE id = ?').get(barberId) as any;
+    if (!barber) {
+      return { success: false, message: 'Barber not found' };
+    }
+
+    const newStatus = barber.status === 'On break' ? 'Available' : 'On break';
+    db.prepare('UPDATE barbers SET status = ? WHERE id = ?').run(newStatus, barberId);
+
+    return { success: true, newStatus };
+  },
+
+  /**
+   * Waiting Area TV Display Data (/display)
+   */
+  getDisplayData(): any {
+    const now = Date.now();
+    const barbers = db.prepare(`
+      SELECT id, name, status, is_on_duty as isOnDuty
+      FROM barbers
+      WHERE is_on_duty = 1
+      ORDER BY id ASC
+    `).all() as any[];
+
+    const barberRows = barbers.map((b) => {
+      const activeEntry = db.prepare(`
+        SELECT * FROM queue_entries
+        WHERE assigned_barber_id = ? AND status IN ('Called', 'In chair')
+        ORDER BY created_at DESC
+        LIMIT 1
+      `).get(b.id) as any;
+
+      let currentToken = null;
+      let isNewlyCalled = false;
+      let customerStatus = null;
+
+      if (activeEntry) {
+        currentToken = activeEntry.token;
+        customerStatus = activeEntry.status;
+
+        if (activeEntry.status === 'Called' && activeEntry.called_at) {
+          const calledAgeSec = (now - new Date(activeEntry.called_at).getTime()) / 1000;
+          isNewlyCalled = calledAgeSec <= 8; // Flash for recent calls
+        }
+      }
+
+      return {
+        id: b.id,
+        name: b.name,
+        status: b.status,
+        currentToken,
+        customerStatus,
+        isNewlyCalled,
+      };
+    });
+
+    // Next 5 waiting tokens
+    const upNextEntries = db.prepare(`
+      SELECT id, token, created_at, service_ids FROM queue_entries
+      WHERE status = 'Waiting'
+      ORDER BY created_at ASC
+      LIMIT 5
+    `).all() as any[];
+
+    const upNext = upNextEntries.map((entry) => {
+      const waitInfo = this.calculateWaitTime(entry.id);
+      return {
+        id: entry.id,
+        token: entry.token,
+        estimatedWaitMinutes: waitInfo.estimatedMinutes,
+      };
+    });
+
+    const onlineSetting = db.prepare(`SELECT value FROM settings WHERE key = 'online_queue_open'`).get() as { value: string } | undefined;
+    const isOnlineQueueOpen = onlineSetting ? onlineSetting.value === 'true' : true;
+
+    return {
+      barbers: barberRows,
+      upNext,
+      isOnlineQueueOpen,
+    };
   }
 };

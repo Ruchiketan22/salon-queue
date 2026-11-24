@@ -149,6 +149,63 @@ app.post('/api/reception/no-show', (req, res) => {
   res.json({ success: true });
 });
 
+// GET /api/barber/:name - Barber View data
+app.get('/api/barber/:name', (req, res) => {
+  const data = queueRules.getBarberView(req.params.name);
+  if (!data) {
+    return res.status(404).json({ error: 'Barber not found' });
+  }
+  res.json(data);
+});
+
+// POST /api/barber/start - Start service
+app.post('/api/barber/start', (req, res) => {
+  const { entryId, barberId } = req.body;
+  if (!entryId || !barberId) {
+    return res.status(400).json({ success: false, message: 'entryId and barberId are required' });
+  }
+  const result = queueRules.startService(entryId, barberId);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  io.emit('queue:updated');
+  res.json(result);
+});
+
+// POST /api/barber/done - Complete service
+app.post('/api/barber/done', (req, res) => {
+  const { entryId, barberId } = req.body;
+  if (!entryId || !barberId) {
+    return res.status(400).json({ success: false, message: 'entryId and barberId are required' });
+  }
+  const result = queueRules.completeService(entryId, barberId);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  io.emit('queue:updated');
+  res.json(result);
+});
+
+// POST /api/barber/toggle-break - Toggle break status
+app.post('/api/barber/toggle-break', (req, res) => {
+  const { barberId } = req.body;
+  if (!barberId) {
+    return res.status(400).json({ success: false, message: 'barberId is required' });
+  }
+  const result = queueRules.toggleBarberBreak(barberId);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  io.emit('queue:updated');
+  res.json(result);
+});
+
+// GET /api/display - Waiting Area TV display data
+app.get('/api/display', (_req, res) => {
+  const data = queueRules.getDisplayData();
+  res.json(data);
+});
+
 // Socket.IO event handler
 io.on('connection', (socket) => {
   socket.on('disconnect', () => {});

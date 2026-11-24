@@ -130,14 +130,28 @@
     "available": "Available",
     "start": "Start",
     "done": "Done",
-    "noCustomer": "No customer yet. Reception will call the next one."
+    "noCustomer": "No customer yet. Reception will call the next one.",
+    "currentCustomerHeading": "Current Customer",
+    "nextForYou": "Next for you",
+    "noNext": "No upcoming customers waiting for you",
+    "elapsed": "elapsed",
+    "calledAlert": "Customer Called · Tap Start when seated",
+    "breakToggle": "Break Status",
+    "servicesHeading": "Services",
+    "timerSinceStart": "Time in chair",
+    "lock": "Lock",
+    "barberNotFound": "Barber not found"
   },
   "display": {
     "title": "Waiting Area Display",
-    "now": "Now",
+    "nowServing": "Now Serving",
     "upNext": "Up Next",
+    "now": "Now",
     "free": "Free",
-    "onBreak": "On break"
+    "onBreak": "On break",
+    "soundBanner": "🔊 Click anywhere to enable sound chime",
+    "noOneWaiting": "No one waiting",
+    "allBarbersFree": "All barbers currently free"
   },
   "admin": {
     "title": "Owner Settings",
@@ -152,6 +166,8 @@
     "invalidPin": "Incorrect PIN. Please try again.",
     "receptionTitle": "Reception Staff Access",
     "receptionSubtitle": "Enter 4-digit staff PIN (1111) to unlock",
+    "barberTitle": "Barber Staff Access",
+    "barberSubtitle": "Enter 4-digit barber PIN (2222) to unlock",
     "pinPlaceholder": "••••"
   }
 }
