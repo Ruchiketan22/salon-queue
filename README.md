@@ -20,6 +20,20 @@ A mobile-first queue app for a salon. Customers join from their phone, see their
 | Waiting Area TV | `/display` | TV |
 | Owner Settings | `/admin` | Owner |
 
+## 📍 Application Routes
+
+| Page | Route | User / Device | Live Link |
+|---|---|---|---|
+| Home | `/` | Customer | [Open](https://salon-queue-frontend-smoky.vercel.app/) |
+| Join Queue | `/join` | Customer | [Open](https://salon-queue-frontend-smoky.vercel.app/join) |
+| My Status | `/status/:id` | Customer | [Open](https://salon-queue-frontend-smoky.vercel.app/status/:id) |
+| Reception Dashboard | `/reception` | Receptionist (Tablet) | [Open](https://salon-queue-frontend-smoky.vercel.app/reception) |
+| Barber View | `/barber/:name` | Barber (Phone) | [Open](https://salon-queue-frontend-smoky.vercel.app/barber/:name) |
+| Waiting Area TV | `/display` | TV | [Open](https://salon-queue-frontend-smoky.vercel.app/display) |
+| Owner Settings | `/admin` | Owner | [Open](https://salon-queue-frontend-smoky.vercel.app/admin) |
+
+> **Note:** Routes containing `:id` or `:name` require a specific customer ID or barber name to access the corresponding page.
+
 ## Tech stack
 React + Vite + TypeScript + Tailwind CSS, Node/Express, SQLite, Socket.IO.
 
@@ -35,5 +49,4 @@ npm run dev
 - `prompts.md` – every prompt used, in order
 - `REFLECTION.md` – what the agent got wrong and how I fixed it
 
-## Known limitations
-(Fill in after your final test run.)
+
