@@ -156,9 +156,32 @@
   "admin": {
     "title": "માલિક સેટિંગ્સ",
     "services": "સેવાઓ",
-    "barbers": "હાજર વાળંદ",
+    "servicesSubtitle": "સેવાઓ ચાલુ/બંધ કરો, સંપાદિત કરો અથવા ઉમેરો. બંધ સેવાઓ /join માં છુપાઈ જશે.",
+    "barbers": "આજે ફરજ પર વાળંદ",
+    "barbersSubtitle": "ફરજ બહારના વાળંદ કતારમાં દેખાશે નહીં.",
     "onlineQueue": "ઓનલાઇન કતાર",
-    "todayStats": "આજના આંકડા"
+    "onlineQueueOpen": "ખુલ્લી — ગ્રાહકો ફોન પરથી જોડાઈ શકે છે",
+    "onlineQueueClosed": "બંધ — ફક્ત વૉક-ઇન (રિસેપ્શન ચાલુ છે)",
+    "todayStats": "આજના આંકડા",
+    "statsServed": "સેવા આપી",
+    "statsAvgWait": "સરેરાશ રાહ",
+    "statsNoShows": "ગેરહાજર",
+    "statsMin": "મિ",
+    "statsNa": "—",
+    "colServiceNameEn": "નામ (EN)",
+    "colServiceNameGu": "નામ (GU)",
+    "colDuration": "મિ",
+    "colPrice": "₹",
+    "colStatus": "ચાલુ",
+    "addService": "+ સેવા ઉમેરો",
+    "editService": "સંપાદિત",
+    "saveService": "સાચવો",
+    "cancelEdit": "રદ",
+    "onDuty": "ફરજ પર",
+    "offDuty": "આજે રજા",
+    "lock": "લૉક",
+    "pinTitle": "માલિક પ્રવેશ",
+    "pinSubtitle": "અનલૉક કરવા ૪-અંકનો માલિક પિન (3333) દાખલ કરો"
   },
   "pin": {
     "enterPin": "પિન દાખલ કરો",
@@ -168,6 +191,8 @@
     "receptionSubtitle": "ટેબ્લેટ ડેશબોર્ડ અનલૉક કરવા માટે ૪-અંકનો સ્ટાફ પિન (1111) દાખલ કરો",
     "barberTitle": "વાળંદ સ્ટાફ પ્રવેશ",
     "barberSubtitle": "અનલૉક કરવા માટે ૪-અંકનો સ્ટાફ પિન (2222) દાખલ કરો",
+    "adminTitle": "માલિક પ્રવેશ",
+    "adminSubtitle": "અનલૉક કરવા ૪-અંકનો માલિક પિન (3333) દાખલ કરો",
     "pinPlaceholder": "••••"
   }
 }

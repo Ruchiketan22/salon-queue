@@ -206,6 +206,66 @@ app.get('/api/display', (_req, res) => {
   res.json(data);
 });
 
+// ─── Admin / Owner Settings Routes ──────────────────────────────────────────
+
+// GET /api/admin/dashboard - Full admin data in one call
+app.get('/api/admin/dashboard', (_req, res) => {
+  res.json(queueRules.adminGetDashboard());
+});
+
+// POST /api/admin/services/:id/toggle - Toggle service active state
+app.post('/api/admin/services/:id/toggle', (req, res) => {
+  const result = queueRules.adminToggleService(req.params.id);
+  if (!result.success) return res.status(404).json(result);
+  io.emit('queue:updated');
+  res.json(result);
+});
+
+// PATCH /api/admin/services/:id - Update service details
+app.patch('/api/admin/services/:id', (req, res) => {
+  const { nameEn, nameGu, durationMinutes, price } = req.body;
+  const result = queueRules.adminUpdateService(req.params.id, {
+    nameEn, nameGu,
+    durationMinutes: parseInt(durationMinutes, 10),
+    price: parseInt(price, 10),
+  });
+  if (!result.success) return res.status(400).json(result);
+  io.emit('queue:updated');
+  res.json(result);
+});
+
+// POST /api/admin/services - Add a new service
+app.post('/api/admin/services', (req, res) => {
+  const { nameEn, nameGu, durationMinutes, price } = req.body;
+  const result = queueRules.adminAddService({
+    nameEn, nameGu,
+    durationMinutes: parseInt(durationMinutes, 10),
+    price: parseInt(price, 10),
+  });
+  if (!result.success) return res.status(400).json(result);
+  io.emit('queue:updated');
+  res.status(201).json(result);
+});
+
+// POST /api/admin/barbers/:id/toggle-duty - Toggle barber on-duty state
+app.post('/api/admin/barbers/:id/toggle-duty', (req, res) => {
+  const result = queueRules.adminToggleBarberDuty(req.params.id);
+  if (!result.success) return res.status(404).json(result);
+  io.emit('queue:updated');
+  res.json(result);
+});
+
+// POST /api/admin/queue-open - Set online queue open/closed
+app.post('/api/admin/queue-open', (req, res) => {
+  const { open } = req.body;
+  if (typeof open !== 'boolean') {
+    return res.status(400).json({ success: false, message: '`open` must be a boolean' });
+  }
+  const result = queueRules.adminSetQueueOpen(open);
+  io.emit('queue:updated');
+  res.json(result);
+});
+
 // Socket.IO event handler
 io.on('connection', (socket) => {
   socket.on('disconnect', () => {});

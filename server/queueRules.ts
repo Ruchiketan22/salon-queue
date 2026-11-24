@@ -809,6 +809,147 @@ export const queueRules = {
     return { success: true, newStatus };
   },
 
+  // ─── Admin / Owner Settings Methods ────────────────────────────────────────
+
+  /**
+   * Get all services (including inactive) for admin view.
+   */
+  adminGetServices(): any[] {
+    return db.prepare(`
+      SELECT id, name_en as nameEn, name_gu as nameGu,
+             duration_minutes as durationMinutes, price,
+             is_active as isActive
+      FROM services
+      ORDER BY duration_minutes ASC
+    `).all() as any[];
+  },
+
+  /**
+   * Toggle a service's active state.
+   * Inactive services are hidden from /join but kept in the DB.
+   */
+  adminToggleService(serviceId: string): { success: boolean; newIsActive?: boolean; message?: string } {
+    const svc = db.prepare('SELECT is_active FROM services WHERE id = ?').get(serviceId) as { is_active: number } | undefined;
+    if (!svc) return { success: false, message: 'Service not found' };
+    const newVal = svc.is_active ? 0 : 1;
+    db.prepare('UPDATE services SET is_active = ? WHERE id = ?').run(newVal, serviceId);
+    return { success: true, newIsActive: newVal === 1 };
+  },
+
+  /**
+   * Update a service's details (name EN, name GU, duration, price).
+   */
+  adminUpdateService(
+    serviceId: string,
+    data: { nameEn: string; nameGu: string; durationMinutes: number; price: number }
+  ): { success: boolean; message?: string } {
+    const svc = db.prepare('SELECT id FROM services WHERE id = ?').get(serviceId);
+    if (!svc) return { success: false, message: 'Service not found' };
+    if (!data.nameEn?.trim() || !data.nameGu?.trim()) return { success: false, message: 'Names are required' };
+    if (!Number.isInteger(data.durationMinutes) || data.durationMinutes < 1) return { success: false, message: 'Invalid duration' };
+    if (!Number.isInteger(data.price) || data.price < 0) return { success: false, message: 'Invalid price' };
+    db.prepare(`
+      UPDATE services SET name_en = ?, name_gu = ?, duration_minutes = ?, price = ? WHERE id = ?
+    `).run(data.nameEn.trim(), data.nameGu.trim(), data.durationMinutes, data.price, serviceId);
+    return { success: true };
+  },
+
+  /**
+   * Add a new service.
+   */
+  adminAddService(
+    data: { nameEn: string; nameGu: string; durationMinutes: number; price: number }
+  ): { success: boolean; service?: any; message?: string } {
+    if (!data.nameEn?.trim() || !data.nameGu?.trim()) return { success: false, message: 'Names are required' };
+    if (!Number.isInteger(data.durationMinutes) || data.durationMinutes < 1) return { success: false, message: 'Invalid duration' };
+    if (!Number.isInteger(data.price) || data.price < 0) return { success: false, message: 'Invalid price' };
+    const id = `srv-${Date.now()}`;
+    db.prepare(`
+      INSERT INTO services (id, name_en, name_gu, duration_minutes, price, is_active)
+      VALUES (?, ?, ?, ?, ?, 1)
+    `).run(id, data.nameEn.trim(), data.nameGu.trim(), data.durationMinutes, data.price);
+    return {
+      success: true,
+      service: { id, nameEn: data.nameEn.trim(), nameGu: data.nameGu.trim(), durationMinutes: data.durationMinutes, price: data.price, isActive: true },
+    };
+  },
+
+  /**
+   * Get all barbers (including off-duty) for admin view.
+   */
+  adminGetBarbers(): any[] {
+    return db.prepare(`
+      SELECT id, name, status, is_on_duty as isOnDuty
+      FROM barbers ORDER BY id ASC
+    `).all() as any[];
+  },
+
+  /**
+   * Toggle a barber's on-duty state for today.
+   * Off-duty barbers are excluded from the barber picker and from wait-time calculations.
+   */
+  adminToggleBarberDuty(barberId: string): { success: boolean; newIsOnDuty?: boolean; message?: string } {
+    const barber = db.prepare('SELECT is_on_duty FROM barbers WHERE id = ?').get(barberId) as { is_on_duty: number } | undefined;
+    if (!barber) return { success: false, message: 'Barber not found' };
+    const newVal = barber.is_on_duty ? 0 : 1;
+    db.prepare('UPDATE barbers SET is_on_duty = ? WHERE id = ?').run(newVal, barberId);
+    return { success: true, newIsOnDuty: newVal === 1 };
+  },
+
+  /**
+   * Set online queue open/closed.
+   * When closed, joinQueue() already rejects with QUEUE_CLOSED.
+   * Walk-in (addWalkIn) is unaffected.
+   */
+  adminSetQueueOpen(open: boolean): { success: boolean } {
+    db.prepare(`
+      INSERT INTO settings (key, value) VALUES ('online_queue_open', ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    `).run(open ? 'true' : 'false');
+    return { success: true };
+  },
+
+  /**
+   * Today's stats for the admin stats cards.
+   */
+  adminGetTodayStats(): { served: number; avgWaitMinutes: number | null; noShows: number } {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const served = (db.prepare(`
+      SELECT COUNT(*) as count FROM queue_entries WHERE date = ? AND status = 'Done'
+    `).get(todayStr) as { count: number }).count;
+
+    const noShows = (db.prepare(`
+      SELECT COUNT(*) as count FROM queue_entries WHERE date = ? AND status = 'No-show'
+    `).get(todayStr) as { count: number }).count;
+
+    // Average wait: time from created_at to called_at for Done entries today
+    const avgRow = db.prepare(`
+      SELECT AVG(
+        CAST((julianday(called_at) - julianday(created_at)) * 1440 AS INTEGER)
+      ) as avg_wait
+      FROM queue_entries
+      WHERE date = ? AND status = 'Done' AND called_at IS NOT NULL
+    `).get(todayStr) as { avg_wait: number | null };
+
+    const avgWaitMinutes = avgRow?.avg_wait != null ? Math.round(avgRow.avg_wait) : null;
+
+    return { served, avgWaitMinutes, noShows };
+  },
+
+  /**
+   * Full admin dashboard data in one call.
+   */
+  adminGetDashboard(): any {
+    const isOpenRow = db.prepare(`SELECT value FROM settings WHERE key = 'online_queue_open'`).get() as { value: string } | undefined;
+    return {
+      services: this.adminGetServices(),
+      barbers: this.adminGetBarbers(),
+      isOnlineQueueOpen: isOpenRow ? isOpenRow.value === 'true' : true,
+      todayStats: this.adminGetTodayStats(),
+    };
+  },
+
   /**
    * Waiting Area TV Display Data (/display)
    */

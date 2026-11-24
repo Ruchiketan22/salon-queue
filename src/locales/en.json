@@ -156,9 +156,32 @@
   "admin": {
     "title": "Owner Settings",
     "services": "Services",
-    "barbers": "Barbers on Duty",
+    "servicesSubtitle": "Toggle, edit, or add services. Off services are hidden from /join.",
+    "barbers": "Barbers on Duty Today",
+    "barbersSubtitle": "Off-duty barbers are hidden from the queue and don't count in wait time.",
     "onlineQueue": "Online Queue",
-    "todayStats": "Today's Stats"
+    "onlineQueueOpen": "Open — customers can join from their phones",
+    "onlineQueueClosed": "Closed — walk-ins only (Reception still works)",
+    "todayStats": "Today's Stats",
+    "statsServed": "Served",
+    "statsAvgWait": "Avg wait",
+    "statsNoShows": "No-shows",
+    "statsMin": "min",
+    "statsNa": "—",
+    "colServiceNameEn": "Name (EN)",
+    "colServiceNameGu": "Name (GU)",
+    "colDuration": "Min",
+    "colPrice": "₹",
+    "colStatus": "On",
+    "addService": "+ Add service",
+    "editService": "Edit",
+    "saveService": "Save",
+    "cancelEdit": "Cancel",
+    "onDuty": "On duty",
+    "offDuty": "Off today",
+    "lock": "Lock",
+    "pinTitle": "Owner Access",
+    "pinSubtitle": "Enter 4-digit owner PIN (3333) to unlock"
   },
   "pin": {
     "enterPin": "Enter PIN",
@@ -168,6 +191,8 @@
     "receptionSubtitle": "Enter 4-digit staff PIN (1111) to unlock",
     "barberTitle": "Barber Staff Access",
     "barberSubtitle": "Enter 4-digit barber PIN (2222) to unlock",
+    "adminTitle": "Owner Access",
+    "adminSubtitle": "Enter 4-digit owner PIN (3333) to unlock",
     "pinPlaceholder": "••••"
   }
 }

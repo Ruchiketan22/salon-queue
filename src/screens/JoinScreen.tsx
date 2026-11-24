@@ -3,6 +3,7 @@ import { Header } from '../components/Header';
 import { BarberAvatar } from '../components/BarberAvatar';
 import { useLanguage } from '../context/LanguageContext';
 import { ServiceItem, Barber } from '../types';
+import { socket } from '../socket';
 
 interface QueueOverviewData {
   waitingCount: number;
@@ -74,6 +75,33 @@ export const JoinScreen: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Live refresh: owner changes (services on/off, barbers on duty, queue open/closed) show up immediately
+  useEffect(() => {
+    const refreshLive = async () => {
+      try {
+        const [srvRes, barbRes, ovRes] = await Promise.all([
+          fetch('/api/services'),
+          fetch('/api/barbers'),
+          fetch('/api/queue/overview'),
+        ]);
+        if (!srvRes.ok || !barbRes.ok || !ovRes.ok) return;
+        const srvData: ServiceItem[] = await srvRes.json();
+        setServices(srvData);
+        setBarbers(await barbRes.json());
+        setOverview(await ovRes.json());
+        setSelectedServiceIds((prev) => prev.filter((id) => srvData.some((s) => s.id === id)));
+      } catch {
+        /* ignore, the next event will retry */
+      }
+    };
+    socket.on('queue:updated', refreshLive);
+    return () => {
+      socket.off('queue:updated', refreshLive);
+    };
+  }, []);
+
+  const isQueueClosed = overview?.isOnlineQueueOpen === false;
 
   const toggleService = (serviceId: string) => {
     setLimitWarning(false);
@@ -178,6 +206,12 @@ export const JoinScreen: React.FC = () => {
             >
               {t('join.viewActiveSpot')} →
             </a>
+          </div>
+        )}
+
+        {isQueueClosed && (
+          <div className="mb-5 p-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs font-medium">
+            {t('home.queueClosed')}
           </div>
         )}
 
@@ -409,7 +443,7 @@ export const JoinScreen: React.FC = () => {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!isFormValid || submitting}
+            disabled={!isFormValid || submitting || isQueueClosed}
             className={`w-full btn-tap-target flex items-center justify-center py-3.5 px-6 rounded-2xl font-extrabold text-sm shadow-xl transition-all ${
               isFormValid && !submitting
                 ? 'bg-gold hover:bg-gold-light text-charcoal-950 active:scale-[0.99] cursor-pointer'
