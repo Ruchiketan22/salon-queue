@@ -17,12 +17,22 @@
     "display": "TV Display",
     "admin": "Admin"
   },
+  "barberStatus": {
+    "available": "Free",
+    "busy": "Busy",
+    "onBreak": "On break"
+  },
   "home": {
     "title": "Welcome to Salon",
     "subtitle": "Check the live queue and save your spot from anywhere",
     "joinQueue": "Join Queue",
     "queueClosed": "Online queue is closed. Walk-ins are welcome at the salon.",
-    "emptyQueue": "No one waiting, walk right in!"
+    "emptyQueue": "No one waiting, walk right in!",
+    "peopleWaiting": "people waiting",
+    "about": "about",
+    "min": "min",
+    "activeSpotNotice": "You have an active spot in the queue",
+    "viewMySpot": "Back to my spot"
   },
   "join": {
     "title": "Join the Queue",
@@ -36,8 +46,14 @@
     "servicesLimit": "You can choose up to 3 services",
     "barber": "Select Barber",
     "anyBarber": "Any barber (fastest)",
-    "confirm": "Confirm & Join",
-    "alreadyInQueue": "You are already in the queue"
+    "onBreakTag": "On break",
+    "summaryTotal": "Total",
+    "summaryMin": "min",
+    "summaryExpectedWait": "Expected wait",
+    "confirm": "Confirm",
+    "joining": "Joining...",
+    "alreadyInQueue": "You are already in the queue",
+    "viewActiveSpot": "View your active spot"
   },
   "status": {
     "title": "My Spot",
