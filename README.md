@@ -1,6 +1,6 @@
 # Salon Queue Management System
 
-**Live demo:** https://REPLACE-WITH-YOUR-VERCEL-LINK.vercel.app
+**Live demo:** https://salon-queue-frontend-smoky.vercel.app
 
 **Hosted on:** Vercel (frontend) + Render (backend)
 
