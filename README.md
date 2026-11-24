@@ -14,7 +14,6 @@ A mobile-first queue app for a salon. Customers join from their phone, see their
 |---|---|---|
 | Home | `/` | Customer |
 | Join Queue | `/join` | Customer |
-| My Status | `/status/:id` | Customer |
 | Reception Dashboard | `/reception` | Receptionist (tablet) |
 | Barber View | `/barber/:name` | Barber (phone) |
 | Waiting Area TV | `/display` | TV |
@@ -26,9 +25,8 @@ A mobile-first queue app for a salon. Customers join from their phone, see their
 |---|---|---|---|
 | Home | `/` | Customer | [Open](https://salon-queue-frontend-smoky.vercel.app/) |
 | Join Queue | `/join` | Customer | [Open](https://salon-queue-frontend-smoky.vercel.app/join) |
-| My Status | `/status/:id` | Customer | [Open](https://salon-queue-frontend-smoky.vercel.app/status/:id) |
 | Reception Dashboard | `/reception` | Receptionist (Tablet) | [Open](https://salon-queue-frontend-smoky.vercel.app/reception) |
-| Barber View | `/barber/:name` | Barber (Phone) | [Open](https://salon-queue-frontend-smoky.vercel.app/barber/:name) |
+| Barber View | `/barber/:name` | Barber (Phone) | [Open](https://salon-queue-frontend-smoky.vercel.app/barber/ravi) |
 | Waiting Area TV | `/display` | TV | [Open](https://salon-queue-frontend-smoky.vercel.app/display) |
 | Owner Settings | `/admin` | Owner | [Open](https://salon-queue-frontend-smoky.vercel.app/admin) |
 
